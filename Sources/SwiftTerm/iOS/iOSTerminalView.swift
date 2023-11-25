@@ -778,7 +778,7 @@ open class TerminalView: UIScrollView, UITextInputTraits, UIKeyInput, UIScrollVi
     func setupAccessoryView ()
     {
         let short = UIDevice.current.userInterfaceIdiom == .phone
-        let ta = TerminalAccessory(frame: CGRect(x: 0, y: 0, width: frame.width, height: short ? 36 : 48),
+        let ta = TerminalAccessory(frame: CGRect(x: 0, y: 0, width: frame.width, height: short ? 51 : 60),
                                    inputViewStyle: .keyboard, container: self)
         #if !os(visionOS)
         inputAssistantItem.leadingBarButtonGroups = []
@@ -1324,15 +1324,15 @@ open class TerminalView: UIScrollView, UITextInputTraits, UIKeyInput, UIScrollVi
             return UIColor (red: r/255.0, green: g/255.0, blue: b/255.0, alpha: 1.0)
         }
         if traitCollection.userInterfaceStyle == .dark {
-            buttonBackgroundColor = UIColor (red: 150/255.0, green: 150/255.0, blue: 150/255.0, alpha: 1)
+            buttonBackgroundColor = UIColor(red: 84/255.0, green: 84/255.0, blue: 84/255.0, alpha: 1.0)
             buttonShadowColor = UIColor (red: 26/255.0, green: 26/255.0, blue: 26/255.0, alpha: 1)
             buttonColor = .white
-            buttonDarkBackgroundColor = getColor (117, 117, 117)
+            buttonDarkBackgroundColor = UIColor(red: 84/255.0, green: 84/255.0, blue: 84/255.0, alpha: 1.0)
         } else {
-            buttonBackgroundColor = UIColor (red: 1, green: 1, blue: 1, alpha: 1)
+            buttonBackgroundColor = UIColor(red: 253/255.0, green: 253/255.0, blue: 254/255.0, alpha: 1.0)
             buttonShadowColor = UIColor (red: 139/255.0, green: 141/255.0, blue: 144/255.0, alpha: 1)
             buttonColor = .black
-            buttonDarkBackgroundColor = getColor (180, 184, 193)
+            buttonDarkBackgroundColor = UIColor(red: 253/255.0, green: 253/255.0, blue: 254/255.0, alpha: 1.0)
         }
     }
     

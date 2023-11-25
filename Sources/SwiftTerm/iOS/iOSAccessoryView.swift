@@ -27,10 +27,10 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
     public var controlModifier: Bool = false {
         didSet {
             controlButton?.isSelected = controlModifier
+            
         }
     }
     
-    var touchButton: UIButton!
     var keyboardButton: UIButton!
     
     var views: [UIView] = []
@@ -68,10 +68,6 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
     
     @objc func esc (_ sender: AnyObject) { clickAndSend ([0x1b]) }
     @objc func tab (_ sender: AnyObject) { clickAndSend ([0x9]) }
-    @objc func tilde (_ sender: AnyObject) { clickAndSend ([UInt8 (ascii: "~")]) }
-    @objc func pipe (_ sender: AnyObject) { clickAndSend ([UInt8 (ascii: "|")]) }
-    @objc func slash (_ sender: AnyObject) { clickAndSend ([UInt8 (ascii: "/")]) }
-    @objc func dash (_ sender: AnyObject) { clickAndSend ([UInt8 (ascii: "-")]) }
     @objc func f1 (_ sender: AnyObject) { clickAndSend (EscapeSequences.cmdF[0]) }
     @objc func f2 (_ sender: AnyObject) { clickAndSend (EscapeSequences.cmdF[1]) }
     @objc func f3 (_ sender: AnyObject) { clickAndSend (EscapeSequences.cmdF[2]) }
@@ -120,21 +116,25 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
     
     @objc func up (_ sender: UIButton)
     {
+        UIDevice.current.playInputClick()
         startTimerForKeypress { self.terminalView?.sendKeyUp () }
     }
     
     @objc func down (_ sender: UIButton)
     {
+        UIDevice.current.playInputClick()
         startTimerForKeypress { self.terminalView?.sendKeyDown () }
     }
     
     @objc func left (_ sender: UIButton)
     {
+        UIDevice.current.playInputClick()
         startTimerForKeypress { self.terminalView?.sendKeyLeft() }
     }
     
     @objc func right (_ sender: UIButton)
     {
+        UIDevice.current.playInputClick()
         startTimerForKeypress { self.terminalView?.sendKeyRight() }
     }
 
@@ -143,7 +143,6 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
         guard let tv = terminalView else { return }
         let wasResponder = tv.isFirstResponder
         if wasResponder { _ = tv.resignFirstResponder() }
-        
         if tv.inputView == nil {
             #if os(visionOS)
             tv.inputView = KeyboardView (frame: CGRect (origin: CGPoint.zero,
@@ -161,11 +160,6 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
         }
         if wasResponder { _ = tv.becomeFirstResponder() }
 
-    }
-
-    @objc func toggleTouch (_ sender: UIButton) {
-        terminalView?.allowMouseReporting.toggle()
-        touchButton.isSelected = !(terminalView?.allowMouseReporting ?? false)
     }
 
     var leftViews: [UIView] = []
@@ -206,96 +200,74 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
         rightViews.append(makeAutoRepeatButton ("arrow.up", #selector(up)))
         rightViews.append(makeAutoRepeatButton ("arrow.down", #selector(down)))
         rightViews.append(makeAutoRepeatButton ("arrow.right", #selector(right)))
-        touchButton = makeButton ("", #selector(toggleTouch), icon: "hand.draw", isNormal: false)
-        touchButton.isSelected = terminalView?.allowMouseReporting ?? false
-        rightViews.append (touchButton)
-        keyboardButton = makeButton ("", #selector(toggleInputKeyboard), icon: "keyboard.chevron.compact.down", isNormal: false)
-        rightViews.append (keyboardButton)
+        keyboardButton = makeButton ("", #selector(toggleInputKeyboard), icon: "ellipsis", isNormal: false)
+        leftViews.append (keyboardButton)
 
-        // calculate aditional space we can give to keys we want to be bigger (all top level except function keys)
-        let minWidth: CGFloat = useSmall ? 20.0 : (UIDevice.current.userInterfaceIdiom == .phone) ? 22 : 32
+        // Calculate additional space we can give to keys we want to be bigger (all top level except function keys)
+        let minWidth: CGFloat = useSmall ? 36.0 : (UIDevice.current.userInterfaceIdiom == .phone) ? 40.0 : 72.0
         let maxFuncKeyWidth = (minWidth + buttonPad) * 10
-        let importantKeysCount: Double = useSmall ? 11 : 13
+        let importantKeysCount: CGFloat = useSmall ? 11.0 : 13.0
         let maxSpaceForImportantKeys = frame.width - maxFuncKeyWidth - buttonPad
-        var aditionalSpaceForImportantKeys: CGFloat = 0
+        var additionalSpaceForImportantKeys: CGFloat = 0
+
         if maxSpaceForImportantKeys > 0 {
-            aditionalSpaceForImportantKeys =  maxSpaceForImportantKeys / importantKeysCount
+            additionalSpaceForImportantKeys = maxSpaceForImportantKeys / importantKeysCount
         }
-        func setMinWidth (_ view: UIView, isImportantKey: Bool = false) {
+
+        func setMinWidth(_ view: UIView, isImportantKey: Bool = false) {
             view.sizeToFit()
+
             if useSmall {
-                view.frame = CGRect (origin: CGPoint.zero, size: CGSize (width: 20, height: view.frame.height))
+                view.frame = CGRect(origin: CGPoint.zero, size: CGSize(width: 26, height: view.frame.height))
             }
+
             var calculatedMinWidth = minWidth
-            
-            // if key we want to be bigger calculate bigger width
+
+            // If key we want to be bigger, calculate a bigger width
             if isImportantKey {
-                calculatedMinWidth = max(aditionalSpaceForImportantKeys, minWidth)
+                calculatedMinWidth = max(additionalSpaceForImportantKeys, minWidth)
             }
-          
+
             if view.frame.width < calculatedMinWidth {
-                let r = CGRect (origin: view.frame.origin, size: CGSize (width: calculatedMinWidth, height: frame.height-8))
+                let r = CGRect(origin: view.frame.origin, size: CGSize(width: calculatedMinWidth, height: frame.height - 10))
                 view.frame = r
             }
         }
-        
-        func buttonizeView (_ view: UIView, isImportantKey: Bool = false) {
-            setMinWidth (view, isImportantKey: isImportantKey)
+
+        func buttonizeView(_ view: UIView, isImportantKey: Bool = false) {
+            setMinWidth(view, isImportantKey: isImportantKey)
         }
+
         leftViews.forEach { buttonizeView($0, isImportantKey: true) }
         rightViews.forEach { buttonizeView($0, isImportantKey: true) }
+
         let fixedUsedSpace = (leftViews + rightViews).reduce(0) { $0 + $1.frame.width + buttonPad }
 
-        if useSmall && false {
-            floatViews.append (makeDouble ("~", "|"))
-            floatViews.append (makeDouble ("/", "-"))
-        } else {
-            floatViews.append(makeButton ("~", #selector(tilde)))
-            floatViews.append(makeButton ("|", #selector(pipe)))
-            floatViews.append(makeButton ("/", #selector(slash)))
-            floatViews.append(makeButton ("-", #selector(dash)))
-        }
         floatViews.forEach {
-            setMinWidth ($0, isImportantKey: true)
+            setMinWidth($0, isImportantKey: true)
         }
-        let usedSpace = (floatViews).reduce(fixedUsedSpace) { $0 + $1.frame.width + buttonPad }
+
+        let usedSpace = floatViews.reduce(fixedUsedSpace) { $0 + $1.frame.width + buttonPad }
+
         var additionalUsedSpaceToAdd = 0.0
-        
+
         if UIDevice.current.userInterfaceIdiom == .phone && frame.width > 500 {
             additionalUsedSpaceToAdd = 50.0
         }
-        var left = frame.width - usedSpace - additionalUsedSpaceToAdd
-        func addOptional (_ text: String, _ selector: Selector) {
-            left -= minWidth + buttonPad
-            
-            if left > 0 {
-                floatViews.append(makeButton(text, selector))
-            }
-        }
-        addOptional("F1", #selector(f1))
-        addOptional("F2", #selector(f2))
-        addOptional("F3", #selector(f3))
-        addOptional("F4", #selector(f4))
-        addOptional("F5", #selector(f5))
-        addOptional("F6", #selector(f6))
-        addOptional("F7", #selector(f7))
-        addOptional("F8", #selector(f8))
-        addOptional("F9", #selector(f9))
-        addOptional("F10", #selector(f10))
-        let smallerFloatViews = useSmall ? floatViews.suffix(floatViews.count - 2) : floatViews.suffix(floatViews.count - 4)
-        smallerFloatViews.forEach {
-            setMinWidth($0)
-        }
+
+        let left = frame.width - usedSpace - additionalUsedSpaceToAdd
 
         views.append(contentsOf: leftViews)
         views.append(contentsOf: floatViews)
         views.append(contentsOf: rightViews)
-        
 
         for view in views {
             addSubview(view)
         }
-        layoutSubviews ()
+
+
+        layoutSubviews()
+
     }
     
     public override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -310,9 +282,9 @@ return
         }
     }
     
-    var buttonPad = 4.0
+    var buttonPad = 6.0
     public override func layoutSubviews() {
-        var x: CGFloat = 2
+        var x: CGFloat = 3
         let dh = views.reduce (0) { max ($0, $1.frame.size.height )}
         
         for view in leftViews + floatViews {
@@ -321,7 +293,7 @@ return
             x += size.width + buttonPad
         }
         
-        var right = frame.width - 2
+        var right = frame.width - 3
         for view in rightViews.reversed() {
             let size = view.frame.size
             view.frame = CGRect (x: right-size.width, y: 4, width: size.width, height: dh)
@@ -346,12 +318,14 @@ return
         TerminalAccessory.styleButton (b)
         b.addTarget(self, action: action, for: .touchDown)
         b.setTitle(title, for: .normal)
+        
         guard let terminalView else {
             return b
         }
         b.color = isNormal ? terminalView.buttonBackgroundColor : terminalView.buttonDarkBackgroundColor
         b.setTitleColor(terminalView.buttonColor, for: .normal)
         b.setTitleColor(terminalView.buttonColor, for: .selected)
+
         if useSmall {
             b.titleLabel?.font = UIFont.systemFont(ofSize: 12)
         }
@@ -360,6 +334,8 @@ return
         if icon != "" {
             if let img = UIImage (systemName: icon, withConfiguration: UIImage.SymbolConfiguration (pointSize: 14.0)) {
                 b.setImage(img.withTintColor(terminalView.buttonColor, renderingMode: .alwaysOriginal), for: .normal)
+                
+                
             }
         }
         return b
@@ -373,13 +349,13 @@ return
     }
     
     // I am not committed to this style, this is just something quick to get going
-    static func styleButton (_ b: UIButton)
-    {
-        b.layer.cornerRadius = 5
-        b.layer.masksToBounds = true
-        b.layer.shadowOffset = CGSize(width: 0, height: 1.0)
-        b.layer.shadowRadius = 0.0
-        b.layer.shadowOpacity = 0.35
+    static func styleButton(_ b: UIButton) {
+        b.layer.cornerRadius = 5.3
+        b.layer.masksToBounds = false
+        b.layer.shadowOffset = CGSize(width: 0, height: 1)
+        b.layer.shadowRadius = 0
+        b.layer.shadowOpacity = 0.4
+        b.layer.shadowColor = UIColor.black.cgColor
     }
 }
 
@@ -390,7 +366,7 @@ class BackgroundSelectedButton: UIButton {
     
     override var isSelected: Bool {
         didSet {
-            self.backgroundColor = isSelected ? UIView().tintColor : color
+            self.backgroundColor = isSelected ? (traitCollection.userInterfaceStyle == .dark ? UIColor.secondaryLabel : UIColor.systemGray5) : color
         }
     }
 }
