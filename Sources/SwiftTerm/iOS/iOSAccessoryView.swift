@@ -187,14 +187,13 @@ public class TerminalAccessory: UIInputView, UIInputViewAudioFeedback {
             let controlButton = makeButton("", #selector(ctrl), icon: "control", isNormal: false)
             leftViews.append(controlButton)
             self.controlButton = controlButton
-            leftViews.append(makeButton("", #selector(tab), icon: "arrow.right.to.line.compact"))
+            leftViews.append(makeButton("", #selector(tab), icon: "arrow.right.to.line"))
         } else {
             leftViews.append(makeButton ("esc", #selector(esc), isNormal: false))
             let controlButton = makeButton ("ctrl", #selector(ctrl), isNormal: false)
             leftViews.append(controlButton)
             self.controlButton = controlButton
-            leftViews.append(makeButton("", #selector(tab), icon: "arrow.right.to.line.compact", isNormal: false))
-            //leftViews.append(makeButton ("tab", #selector(tab)))
+            leftViews.append(makeButton ("tab", #selector(tab)))
         }
         rightViews.append(makeAutoRepeatButton ("arrow.left", #selector(left)))
         rightViews.append(makeAutoRepeatButton ("arrow.up", #selector(up)))
@@ -278,7 +277,7 @@ return
 
     var _useSmall: Bool {
         get {
-            frame.width < 380
+            frame.width < 778
         }
     }
     
@@ -366,6 +365,7 @@ class BackgroundSelectedButton: UIButton {
     
     override var isSelected: Bool {
         didSet {
+            self.tintColor = .clear
             self.backgroundColor = isSelected ? (traitCollection.userInterfaceStyle == .dark ? UIColor.secondaryLabel : UIColor.systemGray5) : color
         }
     }
